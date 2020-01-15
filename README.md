@@ -1,0 +1,1 @@
+# All pracitces came from https://exercism.io/my/tracks/python
