@@ -4,3 +4,5 @@
 shell
 # ignore _pycache_ in all folders
 *__pycache__
+# ignore .vscode
+.vscode
