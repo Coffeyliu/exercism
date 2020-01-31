@@ -1,8 +1,16 @@
 # ignore vitual environment
 .venv_exer
+
 # ignore exercism settup docs
 shell
+
 # ignore _pycache_ in all folders
 *__pycache__
+
 # ignore .vscode
 .vscode
+
+# mypy
+.mypy_cache
+
+.exercism/
