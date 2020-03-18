@@ -1,10 +1,46 @@
 import string
+from typing import List, Dict
 import timeit
-import itertools
+import itertools 
 from collections import defaultdict
 
 #set number = 1000
-sentence = "rah$ rah ah ah ah	roma roma ma	ga ga oh la la	want your bad romance"*100
+sentence = "rah$ rah ah ah ah	roma roma ma	ga ga oh la la	want your bad romance"*1000
+def time_run(func, runs=1000):
+    func_name = func.__name__
+    print("{}:".format(func_name), timeit.timeit("{}(sentence)".format(func.__name__), globals=globals(), number=runs))
+
+
+from numba import njit, types
+
+# numba has very poor performance with strings: it is optimized for numerical code
+# but just as a reference here, a numbe based implementation
+# you can refer at later on
+a, z = ord("a"), ord("z")
+d1, d0 = ord("1"), ord("0")
+ap = ord("'")
+
+@njit(types.boolean(types.int16))
+def keep(c):
+    return (a <= c and c <= z) or (d1 <= c and c <= d0)
+
+@njit(types.DictType(*(types.unicode_type,types.int64))(types.unicode_type))
+def count_words_work(sentence):
+    chars = [ord(c) for c in sentence.lower()+"\n"]
+    word = ""
+    # NOTE: a hack to go around not having a type declaration mechanism to handle 
+    # to mitigate the failures in the type inference step
+    count = {"":0} 
+
+    for i, c in enumerate(chars):
+        if keep(c) or (c == ap and word and keep(chars[i+1])):
+            word += chr(c)
+        elif word:
+            count[word] = 1 + (word in count and count[word])
+            word = ""
+
+    return count
+time_run(count_words_work)
 
 
 # #the first version of successful pytest
@@ -27,8 +63,9 @@ def count_words_origin(sentence):
                 else:
                     dic[on_the_side] = 1
                 on_the_side = ''
+
     return dic
-print('count_words_origin: ', timeit.timeit('count_words_origin(sentence)', globals=globals(), number=1000))        
+time_run(count_words_origin)
 
 
 #------------------ 1. change string.ascii_letters to string.ascii_lowercase ------------------
@@ -51,8 +88,9 @@ def count_words_lowercase(sentence):
                 else:
                     dic[on_the_side] = 1
                 on_the_side = ''
+
     return dic
-print('count_words_lowercase: ', timeit.timeit('count_words_lowercase(sentence)', globals=globals(), number=1000))       
+time_run(count_words_lowercase)
 
 
 
@@ -73,8 +111,9 @@ def count_words_defaultdict(sentence):
             else:
                 dic[on_the_side] = dic[on_the_side] + 1
                 on_the_side = ''
+
     return dic
-print('count_words_defaultdict: ', timeit.timeit('count_words_defaultdict(sentence)', globals=globals(), number=1000))       
+time_run(count_words_defaultdict)
 
 
 
@@ -95,13 +134,15 @@ def count_words_list(sentence):
                 continue
             else:
                 word = ''.join(on_the_side)
+
                 if word in dic:
                     dic[word] = dic[word] + 1
                 else:
                     dic[word] = 1
                 on_the_side = []
+
     return dic
-print('count_words_list: ', timeit.timeit('count_words_list(sentence)', globals=globals(), number=1000))        
+time_run(count_words_list)
 
 
 #------------------ 4. change if on_the_side =='' to if on_the side and swap the braches thereafter.   ------------------
@@ -124,8 +165,9 @@ def count_words_swap(sentence):
                 on_the_side = ''
             else:
                 continue
+
     return dic
-print('count_words_swap: ',timeit.timeit('count_words_swap(sentence)', globals=globals(), number=1000))       
+time_run(count_words_swap)
 
 #------------------ 5. change zzip with keep (c and c_after)   ----------------HAS ERROR--
 # keep_characters = set(string.ascii_letters + string.digits)
@@ -150,7 +192,7 @@ print('count_words_swap: ',timeit.timeit('count_words_swap(sentence)', globals=g
 #     return dic
 
 
-# #--------------------------FLORIN-------------------------------HAS ERROR-------------
+# #---------------------------------------------------------HAS ERROR-------------
 # keep_characters = set(string.ascii_lowercase + string.digits)
 # def count_words(sentence):
 #     sentence = sentence.lower()
@@ -186,8 +228,28 @@ def count_words_best(sentence):
                 on_the_side = ''
             else:
                 continue
+
     return dic
-print('count_words_best: ', timeit.timeit('count_words_best(sentence)', globals=globals(), number=1000))       
+time_run(count_words_best)
+
+
+keep_characters = set(string.ascii_lowercase + string.digits)
+def count_words_zip2(sentence):
+    sentence = sentence.lower()
+    on_the_side = ''
+    dic = defaultdict(int)
+
+    for (c,c_after) in itertools.zip_longest(sentence, sentence[1:]):
+        if c in keep_characters or (c == "'" and on_the_side and c_after in keep_characters):
+            on_the_side = on_the_side + c
+        elif on_the_side:
+            dic[on_the_side] += 1
+            on_the_side = ''
+
+    if on_the_side: dic[on_the_side] += 1
+
+    return dic
+time_run(count_words_zip2)
 
 
 
