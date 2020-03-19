@@ -13,4 +13,14 @@ shell
 # mypy
 .mypy_cache
 
+# the exercism setup
 .exercism/
+
+# cargo (rust) build dir
+target/
+
+# cargo lock file
+Cargo.lock
+
+# extension module libs
+*.so

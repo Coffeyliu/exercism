@@ -1,36 +1,39 @@
 import string
-from typing import List, Dict
 import timeit
 import itertools 
 from collections import defaultdict
+from rust import rust_word_count
 
 #set number = 1000
 sentence = "rah$ rah ah ah ah	roma roma ma	ga ga oh la la	want your bad romance"*1000
 def time_run(func, runs=1000):
     func_name = func.__name__
-    print("{}:".format(func_name), timeit.timeit("{}(sentence)".format(func.__name__), globals=globals(), number=runs))
+    print("{}:".format(func_name), timeit.timeit("{}(sentence)".format(func_name), globals=globals(), number=runs))
 
 
-from numba import njit, types
+# CPython extension module (rust)
+time_run(rust_word_count)
 
-# numba has very poor performance with strings: it is optimized for numerical code
-# but just as a reference here, a numbe based implementation
-# you can refer at later on
+# from numba import njit, types
+
+# # numba has very poor performance with strings: it is optimized for numerical code
+# # but just as a reference here, a numbe based implementation
+# # you can refer at later on
 a, z = ord("a"), ord("z")
 d1, d0 = ord("1"), ord("0")
 ap = ord("'")
 
-@njit(types.boolean(types.int16))
+# @njit(types.boolean(types.int16))
 def keep(c):
     return (a <= c and c <= z) or (d1 <= c and c <= d0)
 
-@njit(types.DictType(*(types.unicode_type,types.int64))(types.unicode_type))
+# @njit(types.DictType(*(types.unicode_type,types.int64))(types.unicode_type))
 def count_words_work(sentence):
     chars = [ord(c) for c in sentence.lower()+"\n"]
     word = ""
     # NOTE: a hack to go around not having a type declaration mechanism to handle 
     # to mitigate the failures in the type inference step
-    count = {"":0} 
+    count = {} # {"":0} 
 
     for i, c in enumerate(chars):
         if keep(c) or (c == ap and word and keep(chars[i+1])):
